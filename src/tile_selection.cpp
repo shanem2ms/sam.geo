@@ -5,7 +5,7 @@
 #ifdef USE_XXHASH
 #include "xxhash.h"
 #else
-#include <extern/komihash.h>
+#include "../extern/komihash.h"
 #endif
 #include <map>
 

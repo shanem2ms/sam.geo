@@ -40,7 +40,7 @@ add_library(sam.geo STATIC ${ALL_FILES})
 target_include_directories(sam.geo PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/."
     "${VCPKG_INCLUDEDIR}"
-    "${EXT_INCLUDES}"
+    "${GLM_INCLUDES}"
     )
 
 add_compile_definitions(DLLX=;PRId64="I64d")

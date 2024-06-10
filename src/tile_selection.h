@@ -1,6 +1,6 @@
 #pragma once
-#include "geo/tileloc.h"
-#include "geo/spherical_mercator_projection.h"
+#include "tileloc.h"
+#include "spherical_mercator_projection.h"
 #include <set>
 
 namespace sam::geo
