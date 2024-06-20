@@ -111,7 +111,22 @@ namespace sam::geo
             if (sidect == 8)
                 return 0;
         }
-        return 1;
+
+        for (int i = 0; i < 8; ++i)
+        {
+            glm::rayd ray(viewPos, glm::normalize(cpts[i] - viewPos));
+            glm::sphered sphere(glm::dvec3(0, 0, 0), m_sphericalMercatorProjection.Radius());
+            int hits = -1;
+            double t0, t1;
+            ray.intersect(sphere, hits, t0, t1);
+            if (hits == 0)
+                return 1;
+
+            double lensq = glm::dot(cpts[i] - viewPos, cpts[i] - viewPos);
+            if (lensq < t0 * t0)
+                return 1;
+        }
+        return 0;
     }
 
     void Tile3dSelection::GetTilesInView(SelectedTileList& outTiles, const geo::tile_loc& tileLoc,

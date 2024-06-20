@@ -81,6 +81,11 @@ public:
         return (wsPt - min) * glm::inverse(vecs);
     }
     
+    glm::dvec3 mid() const
+    {
+        return min + 
+            (vecs[0] + vecs[1] + vecs[2]) * 0.5;
+    }
 
     void get_rotation_scale(glm::dvec3 &size, glm::dmat3x3 &nrot)
     {
