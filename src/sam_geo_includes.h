@@ -18,6 +18,7 @@
 #include <glm/ext/matrix_transform.hpp> // glm::translate, glm::rotate, glm::scale
 #include <glm/ext/scalar_constants.hpp> // glm::pi<float>()
 #include <glm/gtc/quaternion.hpp> // glm::mat4
+#include <glm/gtx/transform.hpp>
 #include "glmext/aabox2.h"
 #include "glmext/aabox.h"
 #include "glmext/Plane.h"

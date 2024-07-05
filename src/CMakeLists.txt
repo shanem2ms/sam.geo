@@ -10,6 +10,7 @@ set(Header_Files
     "spherical_projection.h"
     "tile_selection.h"
     "tile3d_selection.h"
+    "frustum_sphere.h"
     "tileloc.h"
 )  
 
@@ -20,6 +21,7 @@ set(Source_Files
     "spherical_projection.cpp"
     "tile_selection.cpp"
     "tile3d_selection.cpp"
+    "frustum_sphere.cpp"
     "tileloc.cpp"
     )
     
