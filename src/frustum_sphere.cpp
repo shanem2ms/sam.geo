@@ -1,7 +1,7 @@
+#include "sam_geo_includes.h"
 #include "frustum_sphere.h"
 #include "sam_geo_includes.h"
 #include "glmext/Intersection.h"
-
 
 namespace sam::geo
 {
@@ -335,5 +335,5 @@ namespace sam::geo
     }
 
 
-    template class frustum_sphere<double>;
+    template class frustum_sphere<float>;
 }
