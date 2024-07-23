@@ -1,4 +1,5 @@
 #pragma once
+
 namespace sam::geo
 {
     template<typename T> class SphericalMercatorProjection

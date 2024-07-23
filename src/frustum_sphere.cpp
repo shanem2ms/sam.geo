@@ -1,12 +1,12 @@
-#include "sam_geo_includes.h"
 #include "frustum_sphere.h"
+#include "sam_geo_includes.h"
 #include "glmext/Intersection.h"
 
 
 namespace sam::geo
 {
     // Function to calculate the intersection circle of a sphere and a plane
-    template <typename T> bool frustum_sphere<T>::intersectSpherePlane(const glm::vec<3, T>& center, T radius, const glm::planef& plane, glm::circle3_t<T>& circle)
+    template <typename T> bool frustum_sphere<T>::intersectSpherePlane(const glm::vec<3, T>& center, T radius, const glm::plane_t<T>& plane, glm::circle3_t<T>& circle)
     {
         T distance = glm::dot(plane.normal, center) - plane.d;
         if (std::abs(distance) > radius) return false; // No intersection
@@ -60,12 +60,12 @@ namespace sam::geo
     // Function to calculate the intersection angles
     template <typename T> int frustum_sphere<T>::calculateIntersectionAngles(
         const glm::circle3_t<T>& c,       // U dir of the circle's plane
-        const glm::planef& P,
+        const glm::plane_t<T>& P,
         T& a0,                 // Output angle 0
         T& a1                  // Output angle 1
     ) {
 
-        glm::planef circle_plane(c.normal, c.center);
+        glm::plane_t<T> circle_plane(c.normal, c.center);
 
         glm::vec<3, T> linedir;
         glm::vec<3, T> linept;
@@ -100,7 +100,7 @@ namespace sam::geo
         // Check which part of arc is on inside
         while (a1t < a0)
             a1t += glm::two_pi<T>();
-        T midpt = (a0 + a1t) * 0.5f;
+        T midpt = (a0 + a1t) * 0.5;
         if (glm::dot(c.PtFromAngle(midpt), P.normal) - P.d < 0)
         {
             std::swap(a0, a1);
@@ -141,7 +141,7 @@ namespace sam::geo
     }
 
 
-    template <typename T> bool frustum_sphere<T>::get_horizon_plane(const glm::vec<3, T>& viewPos, T radius, glm::planef& horizon_plane, T& earthCutRadius)
+    template <typename T> bool frustum_sphere<T>::get_horizon_plane(const glm::vec<3, T>& viewPos, T radius, glm::plane_t<T>& horizon_plane, T& earthCutRadius)
     {
         // Calculate 3d circle of horizon line on ideal (radius = 1) spherical Earth surface.
         const glm::vec<3, T> wsEyeNormal = -glm::normalize(glm::vec<3, T>(viewPos));
@@ -156,15 +156,15 @@ namespace sam::geo
         const T distToHorizonSquared = glm::sqr(wsEyeDistFromEarthCenter) - radius;
         const T earthCutDistFromEye = distToHorizonSquared / wsEyeDistFromEarthCenter;
         earthCutRadius = glm::sqrt(distToHorizonSquared - glm::sqr(earthCutDistFromEye));
-        horizon_plane = glm::planef(-wsEyeNormal, viewPos + wsEyeNormal * earthCutDistFromEye);
+        horizon_plane = glm::plane_t<T>(-wsEyeNormal, viewPos + wsEyeNormal * earthCutDistFromEye);
         return true;
     }
 
     // Given two spheres oriented at 0,0,0 with radiusA and radiusB, calculates the plane of occlusion of sphere B by
     // sphere A.
-    template <typename T> bool frustum_sphere<T>::get_occlusion_circle(const glm::vec<3, T>& viewPos, T radiusA, T radiusB, glm::planef& occlusion_plane, T& occlusion_radius)
+    template <typename T> bool frustum_sphere<T>::get_occlusion_circle(const glm::vec<3, T>& viewPos, T radiusA, T radiusB, glm::plane_t<T>& occlusion_plane, T& occlusion_radius)
     {
-        glm::planef horizon_plane;
+        glm::plane_t<T> horizon_plane;
         T horizon_radius;
         get_horizon_plane(viewPos, radiusA, horizon_plane, horizon_radius);
 
@@ -174,45 +174,45 @@ namespace sam::geo
         glm::vec<3, T> viewPt = viewPos;
         glm::vec<3, T> viewToHorizon_dir = glm::normalize(horizon_pt - viewPt);
 
-        glm::spheref sphereB(glm::vec<3, T>(0, 0, 0), radiusB);
+        glm::sphere_t<T> sphereB(glm::vec<3, T>(0, 0, 0), radiusB);
         std::vector<glm::vec<3, T>> projPts;
         projPts.push_back(horizon_pt);
         T t[2];
-        int ipts = glm::intersect(sphereB, glm::rayf(viewPt, viewToHorizon_dir), t[0], t[1]);
+        int ipts = glm::intersect(sphereB, glm::ray_t<T>(viewPt, viewToHorizon_dir), t[0], t[1]);
         if (ipts > 0)
         {
             //projPts.push_back();
             glm::vec<3, T> ptOnSphereB = viewPt + viewToHorizon_dir * t[0];
-            occlusion_plane = glm::planef(horizon_plane.normal, ptOnSphereB);
+            occlusion_plane = glm::plane_t<T>(horizon_plane.normal, ptOnSphereB);
             occlusion_radius = glm::sqrt(sphereB.mRadius * sphereB.mRadius - occlusion_plane.d * occlusion_plane.d);
             return true;
         }
         return false;
     }
 
-    template <typename T> std::vector<glm::rangef> frustum_sphere<T>::GetIntersectionArcs(const glm::circle3_t<T>& circle, const std::vector<glm::planef>& planes)
+    template <typename T> std::vector<glm::range_t<T>> frustum_sphere<T>::GetIntersectionArcs(const glm::circle3_t<T>& circle, const std::vector<glm::plane_t<T>>& planes)
     {
-        std::vector<glm::rangef> arcs;
-        arcs.push_back(glm::rangef(0, glm::two_pi<T>()));
+        std::vector<glm::range_t<T>> arcs;
+        arcs.push_back(glm::range_t<T>(0, glm::two_pi<T>()));
         for (int i = 0; i < planes.size(); ++i)
         {
-            const glm::planef& clipPlane = planes[i];
+            const glm::plane_t<T>& clipPlane = planes[i];
             T a, b;
             int result = frustum_sphere<T>::calculateIntersectionAngles(circle, clipPlane, a, b);
 
             if (result == 0)
             {
-                arcs = std::vector<glm::rangef>();
+                arcs = std::vector<glm::range_t<T>>();
                 break;
             }
             else if (result == 2)
                 continue;
-            glm::rangef rga(a, b);
-            std::vector<glm::rangef> newarcs;
+            glm::range_t<T> rga(a, b);
+            std::vector<glm::range_t<T>> newarcs;
             for (auto& arc : arcs)
             {
-                std::vector<glm::rangef> arcs = findIntersectionArcs(arc, rga);
-                newarcs.insert(newarcs.end(), arcs.begin(), arcs.end());
+                std::vector<glm::range_t<T>> arcs2 = findIntersectionArcs(arc, rga);
+                newarcs.insert(newarcs.end(), arcs2.begin(), arcs2.end());
             }
             std::swap(newarcs, arcs);
         }
@@ -226,26 +226,26 @@ namespace sam::geo
         return glm::vec<2, T>(longitude, latitude);
     }
 
-    template <typename T> std::vector<frustum_arc<T>> frustum_sphere<T>::get_intersection_points(const glm::frustumf& frustum, const glm::vec<3, T>& viewPos,
+    template <typename T> std::vector<frustum_arc<T>> frustum_sphere<T>::get_intersection_points(const glm::frustum_t<T>& frustum, const glm::vec<3, T>& viewPos,
         T radius, T occlusionSphereRadius, bool& horizonInView, geo_frustum<T>& geo_frustum)
     {
-        std::vector<glm::planef> planes(&frustum.mPlanes[0], &frustum.mPlanes[6]);
+        std::vector<glm::plane_t<T>> planes(&frustum.mPlanes[0], &frustum.mPlanes[6]);
 
         horizonInView = false;
         // Check if horizon is in view
         if (occlusionSphereRadius > 0)
         {
-            glm::planef occluder_horizon_plane;
+            glm::plane_t<T> occluder_horizon_plane;
             T occluder_horizon_radius;
             get_horizon_plane(viewPos, occlusionSphereRadius, occluder_horizon_plane, occluder_horizon_radius);
 
             glm::vec<3, T> horizoncenter = occluder_horizon_plane.normal * occluder_horizon_plane.d;
             glm::circle3_t<T> circle(horizoncenter, occluder_horizon_plane.normal, occluder_horizon_radius);
-            std::vector<glm::rangef> arcs = GetIntersectionArcs(circle, planes);
+            std::vector<glm::range_t<T>> arcs = GetIntersectionArcs(circle, planes);
             if (arcs.size() > 0)
             {
                 horizonInView = true;
-                glm::planef occlusion_plane;
+                glm::plane_t<T> occlusion_plane;
                 T occlusio_radius;
                 get_occlusion_circle(viewPos, occlusionSphereRadius, radius, occlusion_plane,
                     occlusio_radius);
@@ -253,7 +253,7 @@ namespace sam::geo
             }
         }
 
-        glm::planef horizon_plane;
+        glm::plane_t<T> horizon_plane;
         T horizon_radius;
         if (get_horizon_plane(viewPos, radius, horizon_plane, horizon_radius))
             planes.push_back(horizon_plane);
@@ -264,10 +264,10 @@ namespace sam::geo
             glm::circle3_t<T> circle;
             if (intersectSpherePlane(glm::vec<3, T>(0, 0, 0), radius, planes[planeIdx], circle))
             {
-                std::vector<glm::planef> clipplanes = planes;
+                std::vector<glm::plane_t<T>> clipplanes = planes;
                 clipplanes.erase(clipplanes.begin() + planeIdx);
 
-                std::vector<glm::rangef> arcs = GetIntersectionArcs(circle, clipplanes);
+                std::vector<glm::range_t<T>> arcs = GetIntersectionArcs(circle, clipplanes);
                 if (planeIdx == 0 && arcs.size() > 0)
                 {
                     geo_frustum.nearLeft = circle.PtFromAngle(arcs[0].max);
@@ -296,13 +296,13 @@ namespace sam::geo
         glm::vec<2, T> C = proj.ToGeo2(geo_frustum.farLeft);
         glm::vec<2, T> D = proj.ToGeo2(geo_frustum.farRight);
 
-        glm::vec<2, T> nearCenter = (A + B) * 0.5f;
+        glm::vec<2, T> nearCenter = (A + B) * (T)0.5;
         glm::mat4x4 offsetMatrix = glm::translate(glm::vec<3, T>(-nearCenter, 0));
 
-        glm::vec4 A1 = offsetMatrix * glm::vec4(A, 0.5f, 1);
-        glm::vec4 B1 = offsetMatrix * glm::vec4(B, 0.5f, 1);
-        glm::vec4 C1 = offsetMatrix * glm::vec4(C, 0.5f, 1);
-        glm::vec4 D1 = offsetMatrix * glm::vec4(D, 0.5f, 1);
+        glm::vec4 A1 = offsetMatrix * glm::vec4(A, 0.5, 1);
+        glm::vec4 B1 = offsetMatrix * glm::vec4(B, 0.5, 1);
+        glm::vec4 C1 = offsetMatrix * glm::vec4(C, 0.5, 1);
+        glm::vec4 D1 = offsetMatrix * glm::vec4(D, 0.5, 1);
 
         glm::vec<2, T> nearLine = B - A;
         nearLine = glm::normalize(nearLine);
@@ -314,14 +314,14 @@ namespace sam::geo
         rotMat[1][0] = rtan.y;
         rotMat[1][1] = rotdir.y;
 
-        T xscaleNearInv = 2.0f / glm::dot(rtan, (B - A));
+        T xscaleNearInv = 2.0 / glm::dot(rtan, (B - A));
         T xscaleFar = glm::dot(rtan, (D - C)) * xscaleNearInv;
         T yscale = glm::dot(rotdir, (C - A)) * xscaleNearInv;
 
         glm::mat4x4 sclMat = glm::scale(glm::vec<3, T>(xscaleNearInv, xscaleNearInv, 1));
-        T wscale = (xscaleFar * 0.5f - 1) / yscale;
-        T wyscale = (xscaleFar * 0.5f + 1) / yscale;
-        T wzscale = (xscaleFar * 0.5f - 1) / yscale;
+        T wscale = (xscaleFar * 0.5 - 1) / yscale;
+        T wyscale = (xscaleFar * 0.5 + 1) / yscale;
+        T wzscale = (xscaleFar * 0.5 - 1) / yscale;
 
         glm::mat4x4 wMat = glm::identity<glm::mat4x4>();
         wMat[1][1] = wyscale;
@@ -329,11 +329,11 @@ namespace sam::geo
         wMat[1][3] = wscale;
         wMat[2][2] = 0;
         wMat[3][1] = -1;
-        wMat[3][2] = 0.5f;
+        wMat[3][2] = 0.5;
 
         return wMat * sclMat * rotMat * offsetMatrix;
     }
 
 
-    template class frustum_sphere<float>;
+    template class frustum_sphere<double>;
 }

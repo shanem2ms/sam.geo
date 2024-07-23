@@ -1,8 +1,8 @@
 #pragma once
-#include "spherical_mercator_projection.h"
 #include "glmext/range.h"
 #include "glmext/Circle3.h"
 #include "glmext/Frustum.h"
+#include "spherical_mercator_projection.h"
 
 namespace sam::geo
 {
@@ -27,17 +27,17 @@ namespace sam::geo
 
     template <typename T> class frustum_sphere
     {
-        static int calculateIntersectionAngles(const glm::circle3_t<T>& circle, const glm::planef& P, T& a0, T& a1);
+        static int calculateIntersectionAngles(const glm::circle3_t<T>& circle, const glm::plane_t<T>& P, T& a0, T& a1);
         // Function to calculate the intersection circle of a sphere and a plane
-        static bool intersectSpherePlane(const glm::vec<3, T>& center, T radius, const glm::planef& plane, glm::circle3_t<T>& circle);
+        static bool intersectSpherePlane(const glm::vec<3, T>& center, T radius, const glm::plane_t<T>& plane, glm::circle3_t<T>& circle);
         // Function to discretize the circle into points in 3D space on the original plane
-        static std::vector<glm::rangef> GetIntersectionArcs(const glm::circle3_t<T>& circle, const std::vector<glm::planef>& planes);
+        static std::vector<glm::range_t<T>> GetIntersectionArcs(const glm::circle3_t<T>& circle, const std::vector<glm::plane_t<T>>& planes);
 
     public:
-        static std::vector<frustum_arc<T>> get_intersection_points(const glm::frustumf& frustum, const glm::vec<3, T>& viewPos, T radius, T occlusionSphereRadius, bool& horizonInView,
+        static std::vector<frustum_arc<T>> get_intersection_points(const glm::frustum_t<T>& frustum, const glm::vec<3, T>& viewPos, T radius, T occlusionSphereRadius, bool& horizonInView,
             geo_frustum<T>& geo_frustum);
-        static bool get_occlusion_circle(const glm::vec<3, T>& viewPos, T radiusA, T radiusB, glm::planef& occlusion_plane, T& occlusion_radius);
-        static bool get_horizon_plane(const glm::vec<3, T>& viewPos, T radius, glm::planef& horizon_plane, T& earthCutRadius);
+        static bool get_occlusion_circle(const glm::vec<3, T>& viewPos, T radiusA, T radiusB, glm::plane_t<T>& occlusion_plane, T& occlusion_radius);
+        static bool get_horizon_plane(const glm::vec<3, T>& viewPos, T radius, glm::plane_t<T>& horizon_plane, T& earthCutRadius);
         static glm::mat4x4 get_surface_matrix(const geo_frustum<T>& geo_frustum, const sam::geo::SphericalMercatorProjection<T>& proj);
     };
 
